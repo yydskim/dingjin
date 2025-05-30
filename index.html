@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租房定金收据生成器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #4A90E2; /* 主题色 - 蓝色 */
+            --primary-hover-color: #357ABD;
+            --background-color: #f0f2f5; /* 更柔和的背景灰 */
+            --container-bg-color: #ffffff;
+            --text-color: #333333;
+            --label-color: #555555;
+            --border-color: #dcdfe6;
+            --input-focus-border: #4A90E2;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --receipt-bg-color: #fafafa;
+            --font-family: 'Noto Sans SC', sans-serif; /* 使用更美观的字体 */
+        }
+
+        body {
+            font-family: var(--font-family);
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column; /* 调整为列方向 */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--container-bg-color);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px var(--shadow-color);
+            width: 100%;
+            max-width: 800px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px; /* 添加底部外边距 */
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-color);
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            margin-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 响应式网格布局 */
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--label-color);
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .input-group select {
+            flex: 0 0 160px;
+        }
+        .input-group input {
+            flex: 1 1 auto;
+        }
+
+        button#generate-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-color), #63a4ff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        button#generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
+        }
+
+        #receipt-output {
+            margin-top: 40px;
+            padding: 25px 30px;
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            background-color: var(--receipt-bg-color);
+            white-space: pre-wrap;
+            line-height: 2;
+            font-size: 1.05rem;
+            color: #444;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        #receipt-output.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 收据文本样式 */
+        .receipt-content {
+            line-height: 1.5;
+            font-size: 1.05rem;
+            color: #222;
+        }
+
+        .receipt-content strong {
+            font-weight: 700;
+            color: #000;
+        }
+
+        .receipt-header {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            color: var(--primary-color);
+        }
+
+        .receipt-item {
+            margin-bottom: 5px;
+        }
+
+        .receipt-footer {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        button#download-btn {
+            display: none; /* 初始状态为隐藏 */
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #5cb85c, #6cbe6c); /* 绿色主题 */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 800px; /* 与容器宽度一致 */
+            box-shadow: 0 4px 15px rgba(92, 184, 92, 0.4);
+        }
+
+        button#download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(92, 184, 92, 0.5);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            .input-group select {
+                flex: 1;
+                width: 100%;
+            }
+            .receipt-header {
+                font-size: 1.3rem;
+            }
+            .receipt-content {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>租房定金收据</h1>
+
+        <div class="form-section">
+            <h2>付款人信息</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="payer-name">付款人姓名</label>
+                    <input type="text" id="payer-name" placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label for="payer-id">身份证号</label>
+                    <input type="text" id="payer-id" maxlength="18" placeholder="18位身份证号">
+                </div>
+                <div class="form-group">
+                    <label for="payer-phone">手机号</label>
+                    <input type="text" id="payer-phone" maxlength="11" placeholder="11位手机号">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>收款信息及房屋详情</h2>
+            <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="property-address">房屋地址</label>
+                    <div class="input-group">
+                        <select id="hangzhou-district">
+                            <option value="上城区">上城区</option>
+                            <option value="拱墅区">拱墅区</option>
+                            <option value="西湖区">西湖区</option>
+                            <option value="滨江区">滨江区</option>
+                            <option value="萧山区">萧山区</option>
+                            <option value="余杭区">余杭区</option>
+                            <option value="临平区">临平区</option>
+                            <option value="钱塘区">钱塘区</option>
+                            <option value="富阳区">富阳区</option>
+                            <option value="临安区">临安区</option>
+                            <option value="桐庐县">桐庐县</option>
+                            <option value="淳安县">淳安县</option>
+                            <option value="建德市">建德市</option>
+                        </select>
+                        <input type="text" id="complex-name" placeholder="小区名称及门牌号">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="deposit-amount">定金 (元)</label>
+                    <input type="number" id="deposit-amount" placeholder="请输入金额">
+                </div>
+                <div class="form-group">
+                    <label for="lease-term">租赁合同期限</label>
+                    <input type="text" id="lease-term" placeholder="例如：壹年 / 12个月">
+                </div>
+                <div class="form-group">
+                    <label for="signing-date">合同签署截止日</label>
+                    <input type="date" id="signing-date">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+                <h2>收款人信息</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="receiver-name">收款人姓名</label>
+                    <input type="text" id="receiver-name" placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label for="receiver-id">身份证号</label>
+                    <input type="text" id="receiver-id" maxlength="18" placeholder="18位身份证号">
+                </div>
+                <div class="form-group">
+                    <label for="receiver-phone">手机号</label>
+                    <input type="text" id="receiver-phone" maxlength="11" placeholder="11位手机号">
+                </div>
+            </div>
+        </div>
+
+        <button id="generate-btn">生成收据</button>
+
+        <div id="receipt-output"></div>
+    </div>
+    <button id="download-btn">下载收据图片</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateBtn = document.getElementById('generate-btn');
+            const receiptOutput = document.getElementById('receipt-output');
+            const downloadBtn = document.getElementById('download-btn');
+
+            generateBtn.addEventListener('click', function() {
+                // --- 获取输入框内容 ---
+                const payerName = document.getElementById('payer-name').value.trim();
+                const payerId = document.getElementById('payer-id').value.trim();
+                const payerPhone = document.getElementById('payer-phone').value.trim();
+                
+                const district = document.getElementById('hangzhou-district').value;
+                const complex = document.getElementById('complex-name').value.trim();
+                const fullAddress = `浙江省杭州市${district}${complex}`;
+                
+                const depositAmount = document.getElementById('deposit-amount').value.trim();
+                const leaseTerm = document.getElementById('lease-term').value.trim();
+                const signingDateInput = document.getElementById('signing-date').value;
+                
+                const receiverName = document.getElementById('receiver-name').value.trim();
+                const receiverId = document.getElementById('receiver-id').value.trim();
+                const receiverPhone = document.getElementById('receiver-phone').value.trim();
+
+                // --- 表单验证 ---
+                if (!payerName || !payerId || !payerPhone || !complex || !depositAmount || !leaseTerm || !signingDateInput || !receiverName || !receiverId || !receiverPhone) {
+                    alert('请填写所有必填项！');
+                    return;
+                }
+
+                // 将数字金额转换为中文大写
+                function convertNumberToChinese(num) {
+                    const units = ['', '拾', '佰', '仟', '万', '拾万', '佰万', '仟万', '亿'];
+                    const nums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+                    const numStr = String(num);
+                    let result = '';
+                    let len = numStr.length;
+                    let zeroFlag = false;
+
+                    for (let i = 0; i < len; i++) {
+                        const digit = parseInt(numStr.charAt(i));
+                        if (digit === 0) {
+                            zeroFlag = true;
+                        } else {
+                            if (zeroFlag) {
+                                result += nums[0];
+                                zeroFlag = false;
+                            }
+                            result += nums[digit] + units[len - 1 - i];
+                        }
+                    }
+                    result = result.replace(/零+$/, '');
+                    result = result.replace(/零([拾佰仟])/g, '$1');
+                    result = result.replace(/亿万/g, '亿');
+                    return result || nums[0];
+                }
+
+                const depositAmountChinese = convertNumberToChinese(depositAmount);
+
+                // 格式化日期选择器的值，例如“2025年06月01日”
+                const formattedSigningDate = new Date(signingDateInput).toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                // --- 获取北京日期 ---
+                const beijingDate = new Date().toLocaleDateString('zh-CN', {
+                    timeZone: 'Asia/Shanghai',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                // --- 生成收据文本 ---
+                const receiptText = `
+<div class="receipt-header">租房定金收据</div>
+
+<div class="receipt-content">
+<div class="receipt-item"><strong>兹收到：</strong>付款方（承租方）<strong>${payerName}</strong> (身份证号: ${payerId}，手机号: ${payerPhone})，交来定金人民币（大写）：<strong>${depositAmountChinese}圆整</strong> (小写: ${depositAmount} 元)。</div>
+<div class="receipt-item">此定金用于租赁 <strong>${fullAddress}</strong> 房屋。租赁合同期限：<strong>${leaseTerm}</strong>。</div>
+<div class="receipt-item">收款方（出租方）：<strong>${receiverName}</strong> (身份证号: ${receiverId}，手机号: ${receiverPhone})。</div>
+<div class="receipt-item"><strong>【重要提示】</strong>如承租方未能在 <strong>${formattedSigningDate}</strong> 前（含当日）完成房屋租赁合同签署，则视为单方面违约，此定金不予退还。</div>
+<div class="receipt-footer">
+    收款日期：<strong>${beijingDate}</strong>
+</div>
+</div>
+                `;
+
+                // --- 显示结果并添加动画 ---
+                receiptOutput.innerHTML = receiptText.trim();
+                receiptOutput.classList.add('visible');
+                downloadBtn.style.display = 'block'; // 显示下载按钮
+            });
+
+            // --- 下载图片功能 ---
+            downloadBtn.addEventListener('click', function() {
+                // 使用 html2canvas 将 receipt-output 转换为图片
+                html2canvas(receiptOutput, {
+                    scale: 2, // 提高分辨率，让图片更清晰
+                    logging: false // 关闭控制台日志
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = '租房定金收据.png'; // 设置下载文件名
+                    link.href = canvas.toDataURL('image/png'); // 将canvas内容导出为PNG图片数据
+                    document.body.appendChild(link); // 将链接添加到DOM中
+                    link.click(); // 模拟点击下载
+                    document.body.removeChild(link); // 下载后移除链接
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
