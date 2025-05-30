@@ -197,27 +197,6 @@
             color: #666;
         }
 
-        button#download-btn {
-            display: none; /* 初始状态为隐藏 */
-            margin-top: 20px;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #5cb85c, #6cbe6c); /* 绿色主题 */
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            max-width: 800px; /* 与容器宽度一致 */
-            box-shadow: 0 4px 15px rgba(92, 184, 92, 0.4);
-        }
-
-        button#download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(92, 184, 92, 0.5);
-        }
-
         /* 响应式调整 */
         @media (max-width: 600px) {
             body {
@@ -326,13 +305,11 @@
 
         <div id="receipt-output"></div>
     </div>
-    <button id="download-btn">下载收据图片</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const generateBtn = document.getElementById('generate-btn');
             const receiptOutput = document.getElementById('receipt-output');
-            const downloadBtn = document.getElementById('download-btn');
 
             generateBtn.addEventListener('click', function() {
                 // --- 获取输入框内容 ---
@@ -387,7 +364,7 @@
 
                 const depositAmountChinese = convertNumberToChinese(depositAmount);
 
-                // 格式化日期选择器的值，例如“2025年06月01日”
+                // 格式化日期选择器的值，例如“2025年6月1日”
                 const formattedSigningDate = new Date(signingDateInput).toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: 'long',
@@ -405,7 +382,6 @@
                 // --- 生成收据文本 ---
                 const receiptText = `
 <div class="receipt-header">租房定金收据</div>
-
 <div class="receipt-content">
 <div class="receipt-item"><strong>兹收到：</strong>付款方（承租方）<strong>${payerName}</strong> (身份证号: ${payerId}，手机号: ${payerPhone})，交来定金人民币（大写）：<strong>${depositAmountChinese}圆整</strong> (小写: ${depositAmount} 元)。</div>
 <div class="receipt-item">此定金用于租赁 <strong>${fullAddress}</strong> 房屋。租赁合同期限：<strong>${leaseTerm}</strong>。</div>
@@ -417,26 +393,31 @@
 </div>
                 `;
 
-                // --- 显示结果并添加动画 ---
+                // --- 将生成的HTML文本放入容器中 ---
                 receiptOutput.innerHTML = receiptText.trim();
                 receiptOutput.classList.add('visible');
-                downloadBtn.style.display = 'block'; // 显示下载按钮
-            });
 
-            // --- 下载图片功能 ---
-            downloadBtn.addEventListener('click', function() {
-                // 使用 html2canvas 将 receipt-output 转换为图片
-                html2canvas(receiptOutput, {
-                    scale: 2, // 提高分辨率，让图片更清晰
-                    logging: false // 关闭控制台日志
-                }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = '租房定金收据.png'; // 设置下载文件名
-                    link.href = canvas.toDataURL('image/png'); // 将canvas内容导出为PNG图片数据
-                    document.body.appendChild(link); // 将链接添加到DOM中
-                    link.click(); // 模拟点击下载
-                    document.body.removeChild(link); // 下载后移除链接
-                });
+                // --- 自动将收据转换为图片 ---
+                // 使用一个小延迟确保DOM更新和样式应用完毕
+                setTimeout(() => {
+                    html2canvas(receiptOutput, {
+                        scale: 2, // 提高分辨率，让图片更清晰
+                        logging: false, // 关闭控制台日志
+                        useCORS: true, // 允许跨域图片（如果收据中有的话）
+                        backgroundColor: null // 保持原有背景色
+                    }).then(canvas => {
+                        // 创建一个新的Image元素来显示Canvas内容
+                        const image = new Image();
+                        image.src = canvas.toDataURL("image/png");
+                        image.style.width = "100%";
+                        image.style.display = "block";
+                        
+                        // 清空原来的HTML内容
+                        receiptOutput.innerHTML = '';
+                        // 将图片追加到输出区域
+                        receiptOutput.appendChild(image);
+                    });
+                }, 100);
             });
         });
     </script>
