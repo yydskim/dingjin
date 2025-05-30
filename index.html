@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
+        /* 样式保持不变 */
         :root {
             --primary-color: #4A90E2; /* 主题色 - 蓝色 */
             --primary-hover-color: #357ABD;
@@ -197,7 +198,8 @@
             color: #666;
         }
 
-        button#download-btn {
+        /* 查看图片按钮 */
+        #view-image-btn {
             display: none; /* 初始状态为隐藏 */
             margin-top: 20px;
             padding: 15px 20px;
@@ -213,7 +215,7 @@
             box-shadow: 0 4px 15px rgba(92, 184, 92, 0.4);
         }
 
-        button#download-btn:hover {
+        button#view-image-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(92, 184, 92, 0.5);
         }
@@ -260,185 +262,132 @@
                 </div>
                 <div class="form-group">
                     <label for="payer-phone">手机号</label>
-                    <input type="text" id="payer-phone" maxlength="11" placeholder="11位手机号">
+                    <input type="text" id="payer-phone" maxlength="11" placeholder="请输入手机号">
                 </div>
             </div>
         </div>
 
         <div class="form-section">
-            <h2>收款信息及房屋详情</h2>
+            <h2>收款人信息</h2>
             <div class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                    <label for="property-address">房屋地址</label>
-                    <div class="input-group">
-                        <select id="hangzhou-district">
-                            <option value="上城区">上城区</option>
-                            <option value="拱墅区">拱墅区</option>
-                            <option value="西湖区">西湖区</option>
-                            <option value="滨江区">滨江区</option>
-                            <option value="萧山区">萧山区</option>
-                            <option value="余杭区">余杭区</option>
-                            <option value="临平区">临平区</option>
-                            <option value="钱塘区">钱塘区</option>
-                            <option value="富阳区">富阳区</option>
-                            <option value="临安区">临安区</option>
-                            <option value="桐庐县">桐庐县</option>
-                            <option value="淳安县">淳安县</option>
-                            <option value="建德市">建德市</option>
-                        </select>
-                        <input type="text" id="complex-name" placeholder="小区名称及门牌号">
-                    </div>
+                <div class="form-group">
+                    <label for="payee-name">收款人姓名</label>
+                    <input type="text" id="payee-name" placeholder="请输入姓名">
                 </div>
                 <div class="form-group">
-                    <label for="deposit-amount">定金 (元)</label>
-                    <input type="number" id="deposit-amount" placeholder="请输入金额">
+                    <label for="payee-id">身份证号</label>
+                    <input type="text" id="payee-id" maxlength="18" placeholder="18位身份证号">
                 </div>
                 <div class="form-group">
-                    <label for="lease-term">租赁合同期限</label>
-                    <input type="text" id="lease-term" placeholder="例如：壹年 / 12个月">
-                </div>
-                <div class="form-group">
-                    <label for="signing-date">合同签署截止日</label>
-                    <input type="date" id="signing-date">
+                    <label for="payee-phone">手机号</label>
+                    <input type="text" id="payee-phone" maxlength="11" placeholder="请输入手机号">
                 </div>
             </div>
         </div>
-        
+
         <div class="form-section">
-                <h2>收款人信息</h2>
+            <h2>租赁信息</h2>
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="receiver-name">收款人姓名</label>
-                    <input type="text" id="receiver-name" placeholder="请输入姓名">
+                    <label for="house-name">房屋名称</label>
+                    <input type="text" id="house-name" placeholder="请输入房屋名称">
                 </div>
                 <div class="form-group">
-                    <label for="receiver-id">身份证号</label>
-                    <input type="text" id="receiver-id" maxlength="18" placeholder="18位身份证号">
+                    <label for="house-address">房屋地址</label>
+                    <input type="text" id="house-address" placeholder="请输入房屋地址">
                 </div>
                 <div class="form-group">
-                    <label for="receiver-phone">手机号</label>
-                    <input type="text" id="receiver-phone" maxlength="11" placeholder="11位手机号">
+                    <label for="deposit-amount">定金金额（元）</label>
+                    <input type="number" id="deposit-amount" placeholder="请输入定金金额">
+                </div>
+                <div class="form-group">
+                    <label for="contract-date">合同签署日期</label>
+                    <input type="date" id="contract-date">
                 </div>
             </div>
         </div>
 
         <button id="generate-btn">生成收据</button>
-
-        <div id="receipt-output"></div>
     </div>
-    <button id="download-btn">下载收据图片</button>
+
+    <!-- 收据输出区域 -->
+    <div id="receipt-output" class="receipt-content">
+        <div class="receipt-header">租房定金收据</div>
+        <div id="receipt-text"></div>
+        <div class="receipt-footer">收据生成时间：<span id="receipt-time"></span></div>
+    </div>
+
+    <button id="view-image-btn">查看收据图片</button>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const generateBtn = document.getElementById('generate-btn');
-            const receiptOutput = document.getElementById('receipt-output');
-            const downloadBtn = document.getElementById('download-btn');
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            var payerName = document.getElementById('payer-name').value;
+            var payerId = document.getElementById('payer-id').value;
+            var payerPhone = document.getElementById('payer-phone').value;
+            var payeeName = document.getElementById('payee-name').value;
+            var payeeId = document.getElementById('payee-id').value;
+            var payeePhone = document.getElementById('payee-phone').value;
+            var houseName = document.getElementById('house-name').value;
+            var houseAddress = document.getElementById('house-address').value;
+            var depositAmount = document.getElementById('deposit-amount').value;
+            var contractDate = document.getElementById('contract-date').value;
+            var currentTime = new Date().toLocaleString();
 
-            generateBtn.addEventListener('click', function() {
-                // --- 获取输入框内容 ---
-                const payerName = document.getElementById('payer-name').value.trim();
-                const payerId = document.getElementById('payer-id').value.trim();
-                const payerPhone = document.getElementById('payer-phone').value.trim();
-                
-                const district = document.getElementById('hangzhou-district').value;
-                const complex = document.getElementById('complex-name').value.trim();
-                const fullAddress = `浙江省杭州市${district}${complex}`;
-                
-                const depositAmount = document.getElementById('deposit-amount').value.trim();
-                const leaseTerm = document.getElementById('lease-term').value.trim();
-                const signingDateInput = document.getElementById('signing-date').value;
-                
-                const receiverName = document.getElementById('receiver-name').value.trim();
-                const receiverId = document.getElementById('receiver-id').value.trim();
-                const receiverPhone = document.getElementById('receiver-phone').value.trim();
+            // 生成收据内容
+            var receiptText = `
+        付款人姓名：${payerName}（身份证号：${payerId}，手机号：${payerPhone}）
+        收款人姓名：${payeeName}（身份证号：${payeeId}，手机号：${payeePhone}）
+        房屋名称：${houseName}
+        房屋地址：${houseAddress}
+        定金金额：人民币（大写）：${convertToChinese(depositAmount)} 元
+        合同签署日期：${contractDate}
+        
+        本收据证明，${payerName} 已支付定金金额：${depositAmount} 元给 ${payeeName}，作为租赁房屋的定金。
 
-                // --- 表单验证 ---
-                if (!payerName || !payerId || !payerPhone || !complex || !depositAmount || !leaseTerm || !signingDateInput || !receiverName || !receiverId || !receiverPhone) {
-                    alert('请填写所有必填项！');
-                    return;
-                }
+        收款日期：${currentTime}
+            `;
 
-                // 将数字金额转换为中文大写
-                function convertNumberToChinese(num) {
-                    const units = ['', '拾', '佰', '仟', '万', '拾万', '佰万', '仟万', '亿'];
-                    const nums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-                    const numStr = String(num);
-                    let result = '';
-                    let len = numStr.length;
-                    let zeroFlag = false;
+            // 显示收据内容
+            document.getElementById('receipt-text').innerText = receiptText;
+            document.getElementById('receipt-time').innerText = currentTime;
 
-                    for (let i = 0; i < len; i++) {
-                        const digit = parseInt(numStr.charAt(i));
-                        if (digit === 0) {
-                            zeroFlag = true;
-                        } else {
-                            if (zeroFlag) {
-                                result += nums[0];
-                                zeroFlag = false;
-                            }
-                            result += nums[digit] + units[len - 1 - i];
-                        }
-                    }
-                    result = result.replace(/零+$/, '');
-                    result = result.replace(/零([拾佰仟])/g, '$1');
-                    result = result.replace(/亿万/g, '亿');
-                    return result || nums[0];
-                }
+            // 显示收据输出区域并设置查看图片按钮可见
+            document.getElementById('receipt-output').classList.add('visible');
+            document.getElementById('view-image-btn').style.display = 'inline-block';
 
-                const depositAmountChinese = convertNumberToChinese(depositAmount);
-
-                // 格式化日期选择器的值，例如“2025年06月01日”
-                const formattedSigningDate = new Date(signingDateInput).toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-
-                // --- 获取北京日期 ---
-                const beijingDate = new Date().toLocaleDateString('zh-CN', {
-                    timeZone: 'Asia/Shanghai',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-
-                // --- 生成收据文本 ---
-                const receiptText = `
-<div class="receipt-header">租房定金收据</div>
-
-<div class="receipt-content">
-<div class="receipt-item"><strong>兹收到：</strong>付款方（承租方）<strong>${payerName}</strong> (身份证号: ${payerId}，手机号: ${payerPhone})，交来定金人民币（大写）：<strong>${depositAmountChinese}圆整</strong> (小写: ${depositAmount} 元)。</div>
-<div class="receipt-item">此定金用于租赁 <strong>${fullAddress}</strong> 房屋。租赁合同期限：<strong>${leaseTerm}</strong>。</div>
-<div class="receipt-item">收款方（出租方）：<strong>${receiverName}</strong> (身份证号: ${receiverId}，手机号: ${receiverPhone})。</div>
-<div class="receipt-item"><strong>【重要提示】</strong>如承租方未能在 <strong>${formattedSigningDate}</strong> 前（含当日）完成房屋租赁合同签署，则视为单方面违约，此定金不予退还。</div>
-<div class="receipt-footer">
-    收款日期：<strong>${beijingDate}</strong>
-</div>
-</div>
-                `;
-
-                // --- 显示结果并添加动画 ---
-                receiptOutput.innerHTML = receiptText.trim();
-                receiptOutput.classList.add('visible');
-                downloadBtn.style.display = 'block'; // 显示下载按钮
-            });
-
-            // --- 下载图片功能 ---
-            downloadBtn.addEventListener('click', function() {
-                // 使用 html2canvas 将 receipt-output 转换为图片
-                html2canvas(receiptOutput, {
-                    scale: 2, // 提高分辨率，让图片更清晰
-                    logging: false // 关闭控制台日志
-                }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = '租房定金收据.png'; // 设置下载文件名
-                    link.href = canvas.toDataURL('image/png'); // 将canvas内容导出为PNG图片数据
-                    document.body.appendChild(link); // 将链接添加到DOM中
-                    link.click(); // 模拟点击下载
-                    document.body.removeChild(link); // 下载后移除链接
+            // 调用查看图片按钮
+            document.getElementById('view-image-btn').addEventListener('click', function() {
+                html2canvas(document.getElementById('receipt-output')).then(function(canvas) {
+                    var imageUrl = canvas.toDataURL("image/png");
+                    var imgWindow = window.open();
+                    imgWindow.document.write('<img src="' + imageUrl + '" />');
                 });
             });
         });
+
+        // 数字转中文函数
+        function convertToChinese(amount) {
+            var chineseNumbers = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+            var units = ["", "十", "百", "千", "万", "十", "百", "千", "亿"];
+            var num = amount.toString();
+            var result = "";
+            var zeroFlag = false;
+
+            for (var i = 0; i < num.length; i++) {
+                var n = parseInt(num[i]);
+                if (n === 0) {
+                    if (!zeroFlag) {
+                        result += chineseNumbers[0];
+                    }
+                    zeroFlag = true;
+                } else {
+                    result += chineseNumbers[n] + units[num.length - 1 - i];
+                    zeroFlag = false;
+                }
+            }
+
+            return result;
+        }
     </script>
 
 </body>
